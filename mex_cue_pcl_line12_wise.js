@@ -865,8 +865,8 @@ function getRejects() {
   CaseSealerReject.rejected = CaseSealerDif
   fs.writeFileSync('CaseSealerRejected.json', '{"rejected": ' + CaseSealerReject.rejected + '}')
 }
-setTimeout(getRejects, 60000);
-var storeReject = setInterval(getRejects, 1740000);
+//setTimeout(getRejects, 60000);
+//var storeReject = setInterval(getRejects, 1740000);
 
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)
