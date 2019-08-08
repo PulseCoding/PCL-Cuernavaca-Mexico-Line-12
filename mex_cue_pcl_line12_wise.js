@@ -301,11 +301,13 @@ setInterval(function(){
 client1.on('connect', function(err) {
   intId1 =
     setInterval(function(){
+        client1.readCoils(0, 7).then(function(resp) {
+         FillerCapperWait = resp.coils[2];
+      }, console.error);
         client1.readHoldingRegisters(0, 16).then(function(resp) {
-          CntInFillerCapper =         joinWord(resp.register[0], resp.register[1]);
-          CntOutBottlerSorter =  joinWord(resp.register[2], resp.register[3]);
-          CntOutCapSupply =     joinWord(resp.register[4], resp.register[5]);
-          CntOutFillerCapper =        joinWord(resp.register[6], resp.register[7]);
+          CntInFillerCapper =   joinWord(resp.register[0], resp.register[1]);
+          CntOutBottlerSorter = joinWord(resp.register[2], resp.register[3]);
+          CntOutFillerCapper =  joinWord(resp.register[6], resp.register[7]);
           CntOutDepucker =      joinWord(resp.register[8], resp.register[9]);
         //------------------------------------------BottlerSorter----------------------------------------------
               BottlerSorterct = CntOutBottlerSorter // NOTE: igualar al contador de salida
@@ -414,6 +416,9 @@ client1.on('connect', function(err) {
                   FillerCappersec = Date.now()
                 }
               }
+              if (FillerCapperstate == 2 && FillerCapperWait == 0) {
+                 FillerCapperstate = 3;
+               }
               FillerCapperresults = {
                 ST: FillerCapperstate,
                 CPQI : CntInFillerCapper,
@@ -432,67 +437,6 @@ client1.on('connect', function(err) {
                 FillerCappertime = Date.now()
               }
         //------------------------------------------FillerCapper----------------------------------------------
-        //------------------------------------------CapSupply----------------------------------------------
-              CapSupplyct = CntOutCapSupply // NOTE: igualar al contador de salida
-              if (!CapSupplyONS && CapSupplyct) {
-                CapSupplyspeedTemp = CapSupplyct
-                CapSupplysec = Date.now()
-                CapSupplyONS = true
-                CapSupplytime = Date.now()
-              }
-              if(CapSupplyct > CapSupplyactual){
-                if(CapSupplyflagStopped){
-                  CapSupplyspeed = CapSupplyct - CapSupplyspeedTemp
-                  CapSupplyspeedTemp = CapSupplyct
-                  CapSupplysec = Date.now()
-                  CapSupplydeltaRejected = null
-                  CapSupplyRejectFlag = false
-                  CapSupplytime = Date.now()
-                }
-                CapSupplysecStop = 0
-                CapSupplystate = 1
-                CapSupplyflagStopped = false
-                CapSupplyflagRunning = true
-              } else if( CapSupplyct == CapSupplyactual ){
-                if(CapSupplysecStop == 0){
-                  CapSupplytime = Date.now()
-                  CapSupplysecStop = Date.now()
-                }
-                if( ( Date.now() - ( CapSupplytimeStop * 1000 ) ) >= CapSupplysecStop ){
-                  CapSupplyspeed = 0
-                  CapSupplystate = 2
-                  CapSupplyspeedTemp = CapSupplyct
-                  CapSupplyflagStopped = true
-                  CapSupplyflagRunning = false
-                  CapSupplyflagPrint = 1
-                }
-              }
-              CapSupplyactual = CapSupplyct
-              if(Date.now() - 60000 * CapSupplyWorktime >= CapSupplysec && CapSupplysecStop == 0){
-                if(CapSupplyflagRunning && CapSupplyct){
-                  CapSupplyflagPrint = 1
-                  CapSupplysecStop = 0
-                  CapSupplyspeed = CapSupplyct - CapSupplyspeedTemp
-                  CapSupplyspeedTemp = CapSupplyct
-                  CapSupplysec = Date.now()
-                }
-              }
-              CapSupplyresults = {
-                ST: CapSupplystate,
-                CPQO : CntOutCapSupply,
-                SP: CapSupplyspeed
-              }
-              if (CapSupplyflagPrint == 1) {
-                for (var key in CapSupplyresults) {
-                  if( CapSupplyresults[key] != null && ! isNaN(CapSupplyresults[key]) )
-                  //NOTE: Cambiar path
-                  fs.appendFileSync('C:/PULSE/L12_LOGS/mex_pcl__CapSupply_L12.log', 'tt=' + CapSupplytime + ',var=' + key + ',val=' + CapSupplyresults[key] + '\n')
-                }
-                CapSupplyflagPrint = 0
-                CapSupplysecStop = 0
-                CapSupplytime = Date.now()
-              }
-        //------------------------------------------CapSupply----------------------------------------------
         //------------------------------------------Depucker----------------------------------------------
               Depuckerct = CntOutDepucker // NOTE: igualar al contador de salida
               if (!DepuckerONS && Depuckerct) {
